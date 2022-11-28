@@ -1,0 +1,303 @@
+///// DECLARACION DE VARIABLES /////
+#include <Wire.h>
+#include <ArduinoJson.h>
+#include <Time.h>
+#include <TimeLib.h>
+
+int sensor = 0;      // variable del Sensor IR
+
+int pinBuzzer = 0;   // PIN Buzzer
+
+int pinSensor = 14;   // PIN Sensor
+
+int pinLedR = 15;  // pin Rojo del led RGB
+int pinLedV = 13;  // pin Verde del led RGB
+int pinLedA = 12;   // pin Azul del led RGB
+
+
+
+// C++ code -- Grupo 6 -- Lab 3
+
+///// DECLARACION DE VARIABLES /////
+
+
+
+int pausa = 1000;
+int  cont ;
+int  contador_de_objetos   ;
+int  contador_lapso_de_tiempo ;
+bool seguir_ejecutando ;
+String estado_de_finalizacion ;
+bool No_se_detecto_ninguno_en_5_segundos ;
+int estado_sensor;
+int estado_buzzer;
+String estado_rgb;
+int estado_display;
+
+int cant = 0;
+
+//**//
+
+
+// void SerializeObject(JsonArray sensors, JsonArray actuators)
+// {
+//     doc["cotroller_name"] = "Arduino-nano-1";
+//     doc["date"] = "DateTime.now()";
+//     doc["actuators"] = actuators;
+//     doc["sensors"] = sensors;
+//     serializeJson(doc, json);
+//     Serial.println(json);
+// }
+  
+void setup()// Metodo donde se setean valores iniciales
+{
+  Serial.begin(9600);
+  pinMode(pinSensor, INPUT);   // pone el pinSensor como input
+  pinMode(pinBuzzer , OUTPUT); // pone el pinBuzzer como output
+  pinMode(pinLedR, OUTPUT);    // pone el pinLedR como output
+  pinMode(pinLedV, OUTPUT);    // pone el pinLedV como output
+  pinMode(pinLedA, OUTPUT);    // pone el pinLedA como output
+
+  cont = 0;
+  contador_de_objetos = 0;  
+  contador_lapso_de_tiempo = 0;
+  seguir_ejecutando = true;
+  estado_de_finalizacion = "x";
+  No_se_detecto_ninguno_en_5_segundos = false;
+
+  Wire.onRequest(sendEvent);
+  setTime(17,45,0,28,11,2022);
+
+}
+
+void GenerateAndSerializeJson(int sensor, int buzzer, String RGB, int display)
+{ 
+  StaticJsonDocument<300> doc;
+
+  char json[1000];
+
+  doc["controller_name"] = "NodeMCU esp8266";
+
+  time_t fecha = now();
+
+  String ahora=String(year(fecha)) + "-" + String(month(fecha)) + "-" + String(day(fecha))+ "T" + String(hour(fecha)) + ":" + String(minute(fecha)) + ":" + String(second(fecha)) + "Z";
+  
+  Serial.println(ahora);
+
+  doc["date"] = ahora;
+
+  // Armando el array actuators
+
+  JsonArray arrActuator = doc.createNestedArray("actuators"); 
+
+  StaticJsonDocument<200> act;
+
+  JsonObject actdisplay = act.to<JsonObject>();
+
+  actdisplay["type"]="display";
+
+  actdisplay["current_value"] = display; 
+
+  arrActuator.add(actdisplay);
+
+  JsonObject actledRGB = act.to<JsonObject>();
+
+  actledRGB["type"]="ledRGB";
+
+  actledRGB["current_value"] = RGB; 
+
+  arrActuator.add(actledRGB);
+
+  JsonObject actspeaker = act.to<JsonObject>();
+
+  actspeaker["type"]="Buzzer";
+
+  actspeaker["current_value"] = buzzer; 
+
+  arrActuator.add(actspeaker);
+
+  JsonArray arrSensor = doc.createNestedArray("sensors"); 
+  StaticJsonDocument<300> sen; 
+
+  JsonObject sensors = sen.to<JsonObject>(); 
+
+  sensors["type"]="Proximity";
+
+  sensors["current_value"] = sensor; 
+
+  arrSensor.add(sensors);
+
+
+  serializeJsonPretty(doc, json);
+
+  Serial.print("Json: ");
+
+  Serial.println(json);
+
+  //Wire.write(json, sizeof(json));
+
+
+}
+
+// void loop()
+// {
+
+//   while(cant < 2)
+//   {
+//     GenerateAndSerializeJson(cant,cant+1,"R",cant+6);
+//     cant= cant +1;
+//   }
+ 
+// }
+
+void loop() // Loop infinito, siempre queda ejecutandose.
+{ 
+  while(seguir_ejecutando == true)
+  {
+     sensor = digitalRead(pinSensor);
+     Serial.println(sensor);
+     while(sensor == 1)
+      { 
+        estado_sensor = 0;
+        sensor = digitalRead(pinSensor);
+        Serial.println(sensor);
+        color(255, 255, 0); // azul
+        digitalWrite(pinBuzzer , LOW); // poner el Pin en HIGH, Suena
+        delay(1);
+        cont = cont + 1;
+        if(cont == 5000)
+        { 
+          Serial.print("llego a 5 segundos");
+          Serial.print("\n");
+          seguir_ejecutando = false;
+          estado_de_finalizacion = "Conteo Fallido";
+          break;
+        }               
+      }
+      estado_sensor = 1;
+
+
+      digitalWrite(pinBuzzer , HIGH);
+      estado_buzzer = 1;
+      delay(2);
+      digitalWrite(pinBuzzer , LOW);
+      estado_buzzer = 0;
+
+      if(cont < 10000)
+      { 
+        sensor = digitalRead(pinSensor);
+        Serial.println(sensor);
+        cont = 0;
+        Serial.print("reseteo contador:");
+        Serial.print(cont);
+        Serial.println("");
+
+        
+        color(0, 255, 0); // rosado/magenta
+        contador_de_objetos = contador_de_objetos + 1;
+        estado_display = contador_de_objetos;
+        Serial.print("Contador de objetos:");
+        Serial.print(contador_de_objetos);
+        Serial.println("");
+        
+        delay(1000);
+        if(contador_de_objetos == 9)
+        { 
+          estado_de_finalizacion = "ConteoExitoso";
+          seguir_ejecutando = false;
+        }
+      }
+   }
+  
+   if (estado_de_finalizacion == "ConteoExitoso")
+   {
+    digitalWrite(pinBuzzer , LOW);  
+    color(255, 0, 255);
+    estado_rgb = "R";   
+    Serial.print("Conteo Exitoso");
+    Serial.print("\n");
+    delay(7); // Exito
+    estado_de_finalizacion = "Termino";
+   }
+   if (estado_de_finalizacion == "Conteo Fallido")
+   {
+      color(0, 255, 255);   // amarillo
+
+      estado_rgb = "Y";
+      
+      Serial.print("Conteo Fallido");
+      Serial.print("\n");
+      //color(0, 0, 0);     // apagado
+      //delay(7);
+      estado_de_finalizacion = "Termino";
+
+   }
+   // Exit the loop 
+   //exit(0);  //The 0 is required to prevent compile error.
+  
+  //sensor = digitalRead(9);
+  //Serial.println(sensor);
+  //if (sensor == 0) // Detecto algo
+  //{ 				    //  colores basicos:
+  //  color(255, 0, 0);   // rojo
+  //  delay(pausa);       // delay por pausa
+  //  color(0, 0, 0);   // rojo
+  //  digitalWrite(7, HIGH);
+    
+  //}
+  //if (sensor == 1)  // No detecta nada
+  //{
+  //  digitalWrite(7, LOW);
+   
+ // }
+ // delay(10); // Delay a little bit to improve simulation performance
+}
+
+
+
+// funcion para generar colores
+void color (int rojo, int verde, int azul)
+{
+  digitalWrite(pinLedR, rojo);
+  digitalWrite(pinLedV, verde);
+  digitalWrite(pinLedA, azul);
+}
+
+
+
+
+
+//  colores basicos:
+//  color(255, 0, 0);   // rojo
+//  delay(pausa);       // delay por pausa
+//  color(0, 255, 0);   // verde
+//  delay(pausa);       // delay por pausa
+//  color(0, 0, 255);   // azul
+//  delay(pausa);       // delay por pausa
+
+//  colores mezclados:
+//  color(255, 255, 255); // blanco
+//  delay(pausa);       // delay por pausa
+//  color(255, 255, 0); // amarillo
+//  delay(pausa);       // delay por pausa
+//  color(255, 0, 255); // magenta
+//  delay(pausa);       // delay por pausa
+//  color(0, 255, 255); // cian
+//  delay(pausa);       // delay por pausa
+//  color(0, 0, 0);     // apagado
+//  delay(pausa);       // delay por pausa
+
+void Prender_Buzzer()
+{
+  digitalWrite(pinBuzzer , HIGH);
+  delay(0.01);
+  digitalWrite(pinBuzzer , LOW);
+
+}
+
+
+void sendEvent()
+{
+  GenerateAndSerializeJson(estado_sensor, estado_buzzer, estado_rgb, estado_display);
+
+}
