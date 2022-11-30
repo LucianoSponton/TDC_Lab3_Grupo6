@@ -19,12 +19,12 @@ void loop()
     if(Wire.endTransmission() == 0)
     {
       digitalWrite(12,HIGH);
-      Serial.print(String("Data Sent:" + byte(x) + String("Ok")));
+      Serial.println(String("Data Sent: ") + byte(x) + String(" Ok SI MANDO"));
     }
     else
     {
       digitalWrite(12,LOW);
-      Serial.print(String("Data Sent:" + byte(x) + String("Not")));
+      Serial.println(String("Data Sent: ") + byte(x) + String(" Not"));
     
     }
   }
