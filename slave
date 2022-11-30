@@ -1,0 +1,29 @@
+#include<Wire.h>
+
+const byte MY_ADDRESS = 42;
+
+void setup()
+{
+  Serial.begin(115200);
+  Wire.begin(MY_ADDRESS);
+  for(byte i = 3; i <= 7; i++)
+  {
+    pinMode(i, OUTPUT);
+  }
+  Wire.onRecive(reciveEvent);
+}
+
+void loop()
+{
+  
+}
+
+void reciveEvent(int howMany)
+{
+  Serial.println(String("valor howmany: ") + byte(howmany) );
+  byte c = Wire.read();
+  if(digitalRead(c) == LOW)
+  {
+    Serial.println(String("Reciving data: ") + byte(c) );
+  }
+}
