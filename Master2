@@ -1,0 +1,31 @@
+#include<Wire.h>
+
+const byte ARDUINO_SLAVE_ADDRESS = 12;
+
+void setup()
+{
+  Serial.begin(9600);
+  Wire.begin(12,14);
+  Serial.println("I2C Master Ready");
+  //pinMode(12, OUTPUT);
+}
+
+void loop()
+{
+  for(byte x = 3; x<= 7;x++)
+  {
+    Wire.beginTransmission(ARDUINO_SLAVE_ADDRESS);
+    Wire.write(x);
+    if(Wire.endTransmission() == 0)
+    {
+      //digitalWrite(12,HIGH);
+      Serial.println(String("Data Sent: ") + byte(x) + String(" Ok SI MANDO"));
+    }
+    else
+    {
+      //digitalWrite(12,LOW);
+      Serial.println(String("Data Sent: ") + byte(x) + String(" Not"));
+    
+    }
+  }
+}
