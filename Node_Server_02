@@ -141,7 +141,7 @@ String GenerateAndSerializeJson(int sensor, int buzzer, String RGB, int display)
 
   JsonObject actspeaker = act.to<JsonObject>();
 
-  actspeaker["type"]="Buzzer";
+  actspeaker["type"]="speaker";
 
   actspeaker["current_value"] = buzzer; 
 
@@ -152,7 +152,7 @@ String GenerateAndSerializeJson(int sensor, int buzzer, String RGB, int display)
 
   JsonObject sensors = sen.to<JsonObject>(); 
 
-  sensors["type"]="Proximity";
+  sensors["type"]="proximity";
 
   sensors["current_value"] = sensor; 
 
